@@ -4,29 +4,27 @@ package game;
 import com.senac.SimpleJava.Graphics.Canvas;
 import com.senac.SimpleJava.Graphics.Color;
 import com.senac.SimpleJava.Graphics.GraphicApplication;
-import com.senac.SimpleJava.Graphics.Image;
 import com.senac.SimpleJava.Graphics.Point;
 import com.senac.SimpleJava.Graphics.Resolution;
 import com.senac.SimpleJava.Graphics.Sprite;
+import com.senac.SimpleJava.Graphics.events.KeyboardAction;
 
 public class Arkanoid extends GraphicApplication {
 
-	private Sprite bola;
-	private double dy = -2;
-	private int dx = -2;
-	private Sprite quadrado;
-	private Image bloco; 
+	private Bola bola;
+	private Sprite quadrado, paddel;
+	private boolean desenhaQuadrado = true; 
 	
 	@Override
 	protected void draw(Canvas canvas) {		
 		canvas.clear();
-		bola.draw(canvas);
-		quadrado.draw(canvas);
 		
-		bloco.clear(Color.RED);
-		canvas.drawImage(bloco, 69, 50);
-		bloco.clear(Color.GREEN);
-		canvas.drawImage(bloco, 87, 50);
+		bola.draw(canvas);
+		
+		if(desenhaQuadrado ){
+			quadrado.draw(canvas);
+		}
+		paddel.draw(canvas);
 	}
 
 	@Override
@@ -35,26 +33,62 @@ public class Arkanoid extends GraphicApplication {
 		this.setResolution(Resolution.MSX);
 		this.setFramesPerSecond(60);
 		
-		bola = new Sprite(5, 5, Color.BLACK);
-		bola.setPosition(30, 101);
+		bola = new Bola();
+		bola.setPosition(150, 150);
 		
 		quadrado = new Sprite(18, 10, Color.BLUE);
 		quadrado.setPosition(50, 50);
 		
-		bloco = new Image(18, 10);
+		paddel = new Sprite(20, 5, Color.RED);
+		paddel.setPosition(Resolution.MSX.width/2 - 10, Resolution.MSX.height - 25);
+		this.bindKeyPressed("LEFT", new KeyboardAction() {
+			@Override
+			public void handleEvent() {
+				paddel.move(-3, 0);
+			}
+		});
 		
+		this.bindKeyPressed("RIGHT", new KeyboardAction() {
+			@Override
+			public void handleEvent() {
+				paddel.move(+3, 0);
+			}
+		});
 	}
 
 	@Override
 	protected void loop() {
-		bola.move(dx, dy );
+		bola.move();
+	
 		Point posicao = bola.getPosition();
+	
 		if(posicao.y <= 0 || posicao.y >= Resolution.MSX.height-5){
-			dy *= -1;
+			bola.direcaoY();
 		}
 		if(posicao.x <= 0 || posicao.x >= Resolution.MSX.width-5){
-			dx  *= -1;
+			bola.direcaoX();
 		}
+		boolean bateu = true;
+		Point posicaoQuadrado = quadrado.getPosition();
+		// Se qualquer teste for verdadeiro, a bola nao bateu no quadrado.
+		if (posicao.x > posicaoQuadrado.x + quadrado.getWidth()) 
+		{
+			bateu = false; 
+		}
+		if (posicao.x  + bola.getWidth() < posicaoQuadrado.x) 
+		{
+			bateu = false;
+		}
+		if (posicao.y > posicaoQuadrado.y + quadrado.getHeight()) 
+		{
+			bateu = false;
+		}
+		if (posicao.y  + bola.getHeight() < posicaoQuadrado.y) 
+		{
+			bateu = false;
+		}
+		
+		desenhaQuadrado = !bateu;
 		
 		redraw();
 	}
